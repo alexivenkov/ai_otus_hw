@@ -10,12 +10,10 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
+var R = regexp.MustCompile(`(^\d)|([^\\]\d\d)|(\\[a-z]|\\[A-Z])|` + "(`)")
+
 func Unpack(input string) (string, error) {
-	validation, err := validate(input)
-	if err != nil {
-		return "", err
-	}
-	if !validation {
+	if ! validate(input) {
 		return "", ErrInvalidString
 	}
 
@@ -59,7 +57,6 @@ func repeatLastChar(builder *strings.Builder, repeatAmount int) {
 	}
 }
 
-func validate(input string) (bool, error) {
-	r, err := regexp.Compile(`(^\d)|([^\\]\d\d)|(\\[a-z]|\\[A-Z])|` + "(`)")
-	return len(r.FindStringSubmatch(input)) == 0, err
+func validate(input string) bool {
+	return len(R.FindStringSubmatch(input)) == 0
 }
