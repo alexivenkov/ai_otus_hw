@@ -13,7 +13,7 @@ var ErrInvalidString = errors.New("invalid string")
 var R = regexp.MustCompile(`(^\d)|([^\\]\d\d)|(\\[a-z]|\\[A-Z])|` + "(`)")
 
 func Unpack(input string) (string, error) {
-	if ! validate(input) {
+	if !validate(input) {
 		return "", ErrInvalidString
 	}
 
