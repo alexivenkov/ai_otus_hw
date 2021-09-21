@@ -1,13 +1,14 @@
 package hw03frequencyanalysis
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -48,6 +49,12 @@ func TestTop10(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
 
+	t.Run("less than 10 unique words", func(t *testing.T) {
+		shortText := "cat and dog, one dog,two cats and one Man"
+		require.Len(t, Top10(shortText), 7)
+		require.Equal(t, []string{"and", "one", "cat", "cats", "dog", "dog,two", "man"}, Top10(shortText))
+	})
+
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
@@ -79,4 +86,11 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+}
+
+func TestCannotGetTop10IfChunksAreNotSorted(t *testing.T) {
+	text := "Hello world!"
+	c := Chunks{}
+	_, err := c.Initialize(text).GetTop10()
+	require.Truef(t, errors.Is(err, ErrUnsortedText), "actual error %q", err)
 }
