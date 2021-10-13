@@ -3,6 +3,7 @@ package hw04lrucache
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,6 +14,18 @@ func TestList(t *testing.T) {
 		require.Equal(t, 0, l.Len())
 		require.Nil(t, l.Front())
 		require.Nil(t, l.Back())
+	})
+
+	t.Run("nil does not break move and remove methods", func(t *testing.T) {
+		l := NewList()
+
+		assert.NotPanics(t, func() {
+			l.MoveToFront(nil)
+		})
+
+		assert.NotPanics(t, func() {
+			l.Remove(nil)
+		})
 	})
 
 	t.Run("complex", func(t *testing.T) {

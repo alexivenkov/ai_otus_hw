@@ -50,7 +50,41 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		c := NewCache(1)
+
+		c.Set("test", 123)
+		val, _ := c.Get("test")
+		require.Equal(t, val, 123)
+
+		c.Clear()
+		_, ok := c.Get("test")
+		require.False(t, ok)
+	})
+
+	t.Run("values of any type", func(t *testing.T) {
+		c := NewCache(5)
+
+		testsCases := []struct {
+			t string
+			v interface{}
+		}{
+			{t: "int", v: 10},
+			{t: "float", v: 10.123},
+			{t: "string", v: "test"},
+			{t: "bool", v: true},
+			{t: "struct", v: struct{ field int }{field: 1}},
+		}
+
+		for _, tc := range testsCases {
+			tc := tc
+
+			t.Run(tc.t, func(t *testing.T) {
+				key := Key(tc.t)
+				c.Set(key, tc.v)
+				value, _ := c.Get(key)
+				require.Equal(t, tc.v, value)
+			})
+		}
 	})
 }
 
