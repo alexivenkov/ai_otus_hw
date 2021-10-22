@@ -36,8 +36,6 @@ func (l *list) Back() *ListItem {
 func (l *list) initialize(v interface{}) {
 	item := ListItem{
 		Value: v,
-		Prev:  nil,
-		Next:  nil,
 	}
 	l.First = &item
 	l.Last = &item
