@@ -29,32 +29,29 @@ func (ec *ErrorsCounter) IsErrorLimitExceed() bool {
 	return ec.count >= ec.limit
 }
 
-func produce(done <-chan struct{}, tasks []Task, workersCount int) <-chan Task {
+func produce(tasks []Task, workersCount int, ec *ErrorsCounter) <-chan Task {
 	queue := make(chan Task, workersCount)
 
 	go func() {
 		defer close(queue)
 
 		for _, task := range tasks {
-			select {
-			case queue <- task:
-			case <-done:
+			if ec.IsErrorLimitExceed() {
 				return
 			}
+
+			queue <- task
 		}
 	}()
 
 	return queue
 }
 
-func consume(done chan<- struct{}, queue <-chan Task, wg *sync.WaitGroup, ec *ErrorsCounter, once *sync.Once) {
+func consume(queue <-chan Task, wg *sync.WaitGroup, ec *ErrorsCounter) {
 	defer wg.Done()
 
 	for task := range queue {
 		if ec.IsErrorLimitExceed() {
-			once.Do(func() {
-				close(done)
-			})
 			return
 		}
 
@@ -67,7 +64,6 @@ func consume(done chan<- struct{}, queue <-chan Task, wg *sync.WaitGroup, ec *Er
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	done := make(chan struct{})
 	errorsCounter := ErrorsCounter{
 		limit: m,
 	}
@@ -75,11 +71,10 @@ func Run(tasks []Task, n, m int) error {
 	wg := sync.WaitGroup{}
 	wg.Add(n)
 
-	queue := produce(done, tasks, n)
-	once := sync.Once{}
+	queue := produce(tasks, n, &errorsCounter)
 
 	for i := 0; i < n; i++ {
-		go consume(done, queue, &wg, &errorsCounter, &once)
+		go consume(queue, &wg, &errorsCounter)
 	}
 	wg.Wait()
 
