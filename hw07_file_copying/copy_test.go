@@ -10,9 +10,14 @@ import (
 )
 
 func TestCopy(t *testing.T) {
-	src, _ := os.Open("testdata/input.txt")
-	content, _ := ioutil.ReadFile("testdata/input.txt")
-	stat, _ := src.Stat()
+	src, err := os.Open("testdata/input.txt")
+	require.NoError(t, err)
+
+	content, err := ioutil.ReadFile("testdata/input.txt")
+	require.NoError(t, err)
+
+	stat, err := src.Stat()
+	require.NoError(t, err)
 	src.Close()
 
 	offset := content[1000:]
@@ -63,7 +68,9 @@ func TestCopy(t *testing.T) {
 			copiedFile, _ := os.Open("testdata/copied.txt")
 			content, _ := ioutil.ReadFile("testdata/copied.txt")
 			copiedFileStat, _ := copiedFile.Stat()
-			copiedFile.Close()
+			err = copiedFile.Close()
+
+			require.NoError(t, err)
 			require.Equal(t, tc.expectedSize, copiedFileStat.Size())
 			require.Equal(t, tc.expectedContent, content)
 		})
@@ -75,9 +82,10 @@ func TestCannotCopyDir(t *testing.T) {
 	defer func() {
 		os.Remove("testdata/testdir")
 	}()
-	os.Mkdir("testdata/testdir", 0777)
+	err := os.Mkdir("testdata/testdir", 0777)
+	require.NoError(t, err)
 
-	err := Copy("testdata/testdir", "testdata/testdir_copy", 0, 1000, true)
+	err = Copy("testdata/testdir", "testdata/testdir_copy", 0, 1000, true)
 	require.Truef(t, errors.Is(err, ErrUnsupportedFile), "actual error %q", err)
 }
 
@@ -87,18 +95,24 @@ func TestUnknownFileLength(t *testing.T) {
 }
 
 func TestWrongPermissions(t *testing.T) {
-	f, _ := os.Create("testdata/test_wrong_permissions")
-	f.Chmod(0000)
+	f, err := os.Create("testdata/test_wrong_permissions")
+	require.NoError(t, err)
+
+	err = f.Chmod(0000)
+	require.NoError(t, err)
+
 	defer func() {
 		os.Remove("testdata/test_wrong_permissions")
 	}()
 
-	err := Copy("testdata/test_wrong_permissions", "testdata/test_wrong_permissions_copy", 0, 1000, true)
+	err = Copy("testdata/test_wrong_permissions", "testdata/test_wrong_permissions_copy", 0, 1000, true)
 	require.Truef(t, errors.Is(err, os.ErrPermission), "actual error %q", err)
 }
 
 func TestInvalidParams(t *testing.T) {
-	os.Mkdir("testdata/restricted", 0000)
+	err := os.Mkdir("testdata/restricted", 0000)
+	require.NoError(t, err)
+
 	defer func() {
 		os.Remove("testdata/copied.txt")
 		os.Remove("testdata/restricted")
